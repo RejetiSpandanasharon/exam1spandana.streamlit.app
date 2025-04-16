@@ -1,113 +1,114 @@
+# automobile_app.py
 import streamlit as st
-# ✅ Must be first Streamlit command
-st.set_page_config(layout="wide")
-
 import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 
-# Title and Info
-st.title("Automobile Data Analysis - Exam Part 1 & 2")
-st.markdown("""
-**Name:** Rejeti Spandana Sharon  
-**Banner ID:** 001409139
-""")
+st.set_page_config(page_title="Automobile Data Analysis", layout="wide")
+st.title("Automobile Data Analysis - Part 1 & Part 2")
+st.markdown("**Name**: Rejeti Spandana Sharon  \n**Banner ID**: 001409139")
 
-# Load Dataset
-st.header("📥 1. Import Cleaned Automobile Data")
-url = 'https://raw.githubusercontent.com/klamsal/Fall2024Exam/main/CleanedAutomobile.csv'
-df = pd.read_csv(url)
+# Load Data
+@st.cache_data
+def load_data():
+    url = 'https://raw.githubusercontent.com/klamsal/Fall2024Exam/refs/heads/main/CleanedAutomobile.csv'
+    return pd.read_csv(url)
+
+df = load_data()
+
+# ========================== PART 1 ==========================
+st.header("📊 Part 1: Data Preprocessing and Exploration")
+
+st.subheader("1. Raw Data Preview")
 st.dataframe(df.head())
 
-# PART 1 - Data Preprocessing Summary
-st.header("🧹 Part 1: Data Cleaning, Normalization, and Encoding Summary")
+st.subheader("2. Data Cleaning Notes")
 st.markdown("""
-- Missing values in numerical columns were replaced with the **mean** (e.g., `normalized-losses`, `bore`, `stroke`, `horsepower`, `peak-rpm`).  
-- Missing values in categorical columns like `num-of-doors` were filled using the **most frequent** value.  
-- Rows with missing target values (like `price`) were **dropped**.  
-- Data types were converted appropriately (e.g., `bore` to `float`, `normalized-losses` to `int`).
-- **Normalization** was applied to `length`, `width`, and `height` to scale values between 0 and 1.  
-- Fuel consumption was converted from `mpg` to `L/100km`.  
-- Indicator variables were created for `fuel-type` and `aspiration`.
+- Missing values were handled.
+- Data types were adjusted for numerical analysis.
+- Relevant features were retained.
 """)
 
-# PART 2 Starts Here
-# Data Types
-st.header("🔍 2. Data Exploration and Visualization")
-st.subheader("Data Types")
-st.write(df.dtypes)
-
-st.subheader("Q1: Data Type of 'peak-rpm'")
-st.info(f"Data type of 'peak-rpm': {df['peak-rpm'].dtype}")
-
-st.subheader("Q2: Correlation Matrix - Selected Features")
-df_corr = df[['bore', 'stroke', 'compression-ratio', 'horsepower']].astype(float)
-st.dataframe(df_corr.corr())
-
-# Scatterplots and Correlations
-st.subheader("Visual Correlation Check")
-with st.expander("Scatterplots + Regression Lines"):
-    fig1 = sns.regplot(x="engine-size", y="price", data=df)
-    st.pyplot(fig1.figure)
-
-    fig2 = sns.regplot(x="highway-mpg", y="price", data=df)
-    st.pyplot(fig2.figure)
-
-    fig3 = sns.regplot(x="peak-rpm", y="price", data=df)
-    st.pyplot(fig3.figure)
-
-# Question 3a and 3b
-st.subheader("Q3: Stroke vs Price")
-st.write(df[["stroke", "price"]].astype(float).corr())
-fig4 = sns.regplot(x="stroke", y="price", data=df)
-st.pyplot(fig4.figure)
-
-# Boxplots
-st.header("📦 3. Categorical Variable Analysis")
-for cat_var in ["body-style", "engine-location", "drive-wheels"]:
-    fig = sns.boxplot(x=cat_var, y="price", data=df)
-    st.subheader(f"Boxplot: {cat_var} vs Price")
-    st.pyplot(fig.figure)
-
-# Descriptive Stats
-st.header("📊 4. Descriptive Statistics")
+st.subheader("3. Summary Statistics")
+st.write("Numerical:")
 st.dataframe(df.describe())
-st.subheader("Categorical Description")
-st.dataframe(df.describe(include=['object']))
+st.write("Categorical:")
+st.dataframe(df.describe(include="object"))
 
-# Grouping
-st.header("🧮 5. Grouping and Aggregation")
-df_grouped = df.groupby(['drive-wheels'], as_index=False)['price'].mean()
-st.subheader("Average Price by Drive Wheels")
-st.dataframe(df_grouped)
+st.subheader("4. Unique Values in Columns")
+selected_col = st.selectbox("Choose a column to see unique values", df.columns)
+st.write(df[selected_col].unique())
 
-st.subheader("Q4: Average Price by Body Style")
-st.dataframe(df.groupby("body-style")["price"].mean().reset_index())
+# ========================== PART 2 ==========================
+st.header("📈 Part 2: Statistical and Visual Analysis")
 
-# Heatmap
-grouped = df[['drive-wheels','body-style','price']].groupby(['drive-wheels','body-style'],as_index=False).mean()
-pivoted = grouped.pivot(index='drive-wheels',columns='body-style', values='price').fillna(0)
-fig, ax = plt.subplots(figsize=(10,6))
-im = ax.pcolor(pivoted, cmap='RdBu')
-ax.set_xticks(np.arange(pivoted.shape[1]) + 0.5)
-ax.set_yticks(np.arange(pivoted.shape[0]) + 0.5)
-ax.set_xticklabels(pivoted.columns, rotation=90)
-ax.set_yticklabels(pivoted.index)
-fig.colorbar(im)
-st.subheader("Heatmap: Drive Wheels and Body Style vs Price")
-st.pyplot(fig)
+st.subheader("1. Data Types")
+st.dataframe(df.dtypes)
 
-# Pearson Correlation
-st.header("📈 6. Pearson Correlation with P-values")
-def corr_pval(x, y):
-    coef, p = stats.pearsonr(df[x], df[y])
-    return coef, p
+st.info(f"**Data type of 'peak-rpm'**: `{df['peak-rpm'].dtype}`")
 
-columns = ['wheel-base', 'horsepower', 'length', 'width', 'curb-weight',
-           'engine-size', 'bore', 'city-mpg', 'highway-mpg']
+st.subheader("2. Correlation Matrix for Select Features")
+cols = ['bore', 'stroke', 'compression-ratio', 'horsepower']
+corr_matrix = df[cols].astype(float).corr()
+st.dataframe(corr_matrix.style.background_gradient(cmap='coolwarm'))
 
-for col in columns:
-    coef, p = corr_pval(col, 'price')
-    st.markdown(f"**{col} vs price** → Pearson r = {coef:.3f}, P = {p:.5f}")
+st.subheader("3. Scatter Plot with Regression Line")
+feature = st.selectbox("Choose feature to plot against price", df.select_dtypes(include='number').columns)
+fig1, ax1 = plt.subplots()
+sns.regplot(x=feature, y='price', data=df, ax=ax1)
+st.pyplot(fig1)
+
+if feature != "price":
+    corr_val = df[[feature, "price"]].corr().iloc[0,1]
+    st.write(f"**Correlation between `{feature}` and `price`**: {corr_val:.3f}")
+
+st.subheader("4. Boxplot: Categorical Feature vs Price")
+cat_feature = st.selectbox("Select a categorical feature", df.select_dtypes(include='object').columns)
+fig2, ax2 = plt.subplots()
+sns.boxplot(x=cat_feature, y="price", data=df, ax=ax2)
+plt.xticks(rotation=45)
+st.pyplot(fig2)
+
+st.subheader("5. Grouping and Pivot Table Analysis")
+avg_price_by_body = df.groupby("body-style")["price"].mean().reset_index()
+st.write("Average Price by Body Style")
+st.dataframe(avg_price_by_body)
+
+grouped = df[['drive-wheels', 'body-style', 'price']].groupby(['drive-wheels', 'body-style'], as_index=False).mean()
+pivot = grouped.pivot(index='drive-wheels', columns='body-style', values='price').fillna(0)
+
+fig3, ax3 = plt.subplots()
+im = ax3.imshow(pivot.values, cmap='coolwarm')
+ax3.set_xticks(np.arange(len(pivot.columns)))
+ax3.set_yticks(np.arange(len(pivot.index)))
+ax3.set_xticklabels(pivot.columns)
+ax3.set_yticklabels(pivot.index)
+plt.setp(ax3.get_xticklabels(), rotation=45, ha="right")
+for i in range(len(pivot.index)):
+    for j in range(len(pivot.columns)):
+        ax3.text(j, i, f"{pivot.iloc[i, j]:.0f}", ha="center", va="center", color="black")
+fig3.colorbar(im)
+st.pyplot(fig3)
+
+st.subheader("6. Pearson Correlation & P-Value")
+x = st.selectbox("X Variable", df.select_dtypes(include='number').columns, key='pearson_x')
+y = st.selectbox("Y Variable", df.select_dtypes(include='number').columns, key='pearson_y')
+
+if x and y:
+    pearson_coef, p_value = stats.pearsonr(df[x], df[y])
+    st.write(f"**Pearson Correlation Coefficient** between `{x}` and `{y}`: {pearson_coef:.3f}")
+    st.write(f"**P-value**: {p_value:.5f}")
+    if p_value < 0.001:
+        st.success("Strong evidence the correlation is significant.")
+    elif p_value < 0.05:
+        st.info("Moderate evidence the correlation is significant.")
+    elif p_value < 0.1:
+        st.warning("Weak evidence the correlation is significant.")
+    else:
+        st.error("No evidence that the correlation is significant.")
+
+# Footer
+st.markdown("---")
+st.markdown("Made with ❤️ using Streamlit")
