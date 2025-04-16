@@ -88,8 +88,8 @@ st.dataframe(drive_wheels_counts)
 
 # Grouping
 st.header("5. Grouping Data")
-df_group = df[['drive-wheels','body-style','price']]
-df_grouped = df_group.groupby(['drive-wheels'],as_index=False).mean()
+df_group = df[['drive-wheels', 'price']]
+df_grouped = df_group.groupby(['drive-wheels'], as_index=False).mean()
 st.subheader("Average Price by Drive Wheels")
 st.dataframe(df_grouped)
 
