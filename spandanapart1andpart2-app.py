@@ -96,7 +96,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 
-# Set page config
+# ✅ Must be first Streamlit command
 st.set_page_config(layout="wide")
 
 # Title and Info
